@@ -7,27 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- شاشة تسجيل الدخول للإدمن -->
-    <div id="adminLoginSection" class="auth-container">
-        <div class="auth-box">
-            <h2>🔐 تسجيل دخول الإدمن</h2>
-            <div class="form-group">
-                <label>اسم الإدمن:</label>
-                <input type="text" id="adminUsername" placeholder="أدخل اسم الإدمن">
-            </div>
-            <div class="form-group">
-                <label>كلمة المرور:</label>
-                <input type="password" id="adminPassword" placeholder="أدخل كلمة المرور">
-            </div>
-            <button onclick="adminLogin()" class="auth-btn">دخول</button>
-            <p style="color: #999; font-size: 12px; margin-top: 10px;">
-                بيانات تجريبية: الاسم: admin | الرمز: 1234
-            </p>
-        </div>
-    </div>
 
-    <!-- لوحة الإدمن -->
-    <div id="adminSection" class="main-container" style="display: none;">
+    <div id="adminSection" class="main-container">
         <header class="admin-header">
             <h1>📊 لوحة تحكم الإدمن</h1>
             <div class="user-info">
@@ -37,14 +18,12 @@
         </header>
 
         <div class="container">
-            <!-- علامات التبويب -->
             <div class="tabs">
                 <button onclick="switchTab('orders')" class="tab-btn active">📋 الطلبات</button>
                 <button onclick="switchTab('inventory')" class="tab-btn">📦 إدارة المخزون</button>
                 <button onclick="switchTab('reports')" class="tab-btn">📈 التقارير الأسبوعية</button>
             </div>
 
-            <!-- قسم الطلبات -->
             <div id="ordersTab" class="tab-content active">
                 <h2>إدارة الطلبات</h2>
                 <div id="ordersContainer" class="orders-table-container">
@@ -61,22 +40,17 @@
                                 <th>الإجراءات</th>
                             </tr>
                         </thead>
-                        <tbody id="ordersTableBody">
-                        </tbody>
+                        <tbody id="ordersTableBody"></tbody>
                     </table>
                     <p id="noOrders" style="text-align: center; color: #999; margin-top: 20px;">لا توجد طلبات حالياً</p>
                 </div>
             </div>
 
-            <!-- قسم إدارة المخزون -->
             <div id="inventoryTab" class="tab-content">
                 <h2>إدارة المخزون</h2>
-                <div class="inventory-grid" id="inventoryGrid">
-                    <!-- سيُعرض هنا بطاقات المخزون ديناميكياً -->
-                </div>
+                <div class="inventory-grid" id="inventoryGrid"></div>
             </div>
 
-            <!-- قسم التقارير -->
             <div id="reportsTab" class="tab-content">
                 <h2>التقارير الأسبوعية</h2>
                 <div class="reports-controls">
@@ -91,434 +65,114 @@
     </div>
 
     <script>
-        // بيانات الإدمن
-        const adminUsers = {
-            'HITLER': { password: '1234', name: 'هتلر ' },
-            'manager': { password: '5678', name: 'مدير العمليات' }
-        };
+        const adminUsers = { 'HITLER': { password: '1234', name: 'هتلر ' }, 'manager': { password: '5678', name: 'مدير العمليات' } };
+        const defaultInventory = { 'شاي': { key: 'p0', stock: 50, price: 15 }, 'شاي اخض': { key: 'p1', stock: 50, price: 15 }, 'يانسون': { key: 'p2', stock: 50, price: 15 }, 'نعناع': { key: 'p3', stock: 50, price: 15 }, 'كركدية': { key: 'p4', stock: 50, price: 15 }, 'قرفة': { key: 'p5', stock: 50, price: 15 }, 'جنزبيل': { key: 'p6', stock: 50, price: 15 }, 'كوفي ميكس': { key: 'p7', stock: 50, price: 15 }, 'كوفي ميكس 4*1': { key: 'p8', stock: 50, price: 15 }, 'نسكافيه3*1': { key: 'p9', stock: 50, price: 15 }, 'نسكافيه 2*1': { key: 'p10', stock: 50, price: 15 }, 'نسكافيه بلاك': { key: 'p11', stock: 50, price: 15 }, 'كابتشينو بندق': { key: 'p12', stock: 50, price: 15 }, 'كابتشينو موكا': { key: 'p13', stock: 50, price: 15 }, 'كابتشينو لاتيه': { key: 'p14', stock: 50, price: 15 }, 'هوت شوكلت': { key: 'p15', stock: 50, price: 15 }, 'قهوة تركي': { key: 'p16', stock: 50, price: 15 }, 'قهوة فرنساوي': { key: 'p17', stock: 50, price: 15 }, 'قرفة بحليب': { key: 'p18', stock: 50, price: 15 }, 'شاي بحليب': { key: 'p19', stock: 50, price: 15 } };
+        let inventory = {};
 
-        // بيانات المخزون الأولية (قائمة المنتجات المطلوبة)
-        const defaultInventory = {
-            'شاي': { key: 'p0', stock: 50, price: 15 },
-            'شاي اخض': { key: 'p1', stock: 50, price: 15 },
-            'يانسون': { key: 'p2', stock: 50, price: 15 },
-            'نعناع': { key: 'p3', stock: 50, price: 15 },
-            'كركدية': { key: 'p4', stock: 50, price: 15 },
-            'قرفة': { key: 'p5', stock: 50, price: 15 },
-            'جنزبيل': { key: 'p6', stock: 50, price: 15 },
-            'كوفي ميكس': { key: 'p7', stock: 50, price: 15 },
-            'كوفي ميكس 4*1': { key: 'p8', stock: 50, price: 15 },
-            'نسكافيه3*1': { key: 'p9', stock: 50, price: 15 },
-            'نسكافيه 2*1': { key: 'p10', stock: 50, price: 15 },
-            'نسكافيه بلاك': { key: 'p11', stock: 50, price: 15 },
-            'كابتشينو بندق': { key: 'p12', stock: 50, price: 15 },
-            'كابتشينو موكا': { key: 'p13', stock: 50, price: 15 },
-            'كابتشينو لاتيه': { key: 'p14', stock: 50, price: 15 },
-            'هوت شوكلت': { key: 'p15', stock: 50, price: 15 },
-            'قهوة تركي': { key: 'p16', stock: 50, price: 15 },
-            'قهوة فرنساوي': { key: 'p17', stock: 50, price: 15 },
-            'قرفة بحليب': { key: 'p18', stock: 50, price: 15 },
-            'شاي بحليب': { key: 'p19', stock: 50, price: 15 }
-        };
+        window.addEventListener('load', function() {
+            const admin = localStorage.getItem('adminUser');
+            if (!admin || !adminUsers[admin]) { window.location.href = "login.html"; }
+            else {
+                document.getElementById('adminNameDisplay').textContent = `مرحباً، ${adminUsers[admin].name}`;
+                loadInventory(); loadOrders();
+            }
+        });
 
-        // البداية: نأخذ نسخة من الافتراضات
-        let inventory = Object.assign({}, defaultInventory);
+        function adminLogout() { localStorage.removeItem('adminUser'); window.location.href = "login.html"; }
 
-        // تحميل البيانات المحفوظة ودمجها مع الافتراضات لإضافة المنتجات الجديدة إذا كانت مفقودة
         function loadInventory() {
             const savedRaw = localStorage.getItem('inventory');
-            let saved = {};
-            try {
-                if (savedRaw) saved = JSON.parse(savedRaw) || {};
-            } catch (e) {
-                saved = {};
-            }
-
-            // ابدأ بالافتراضات ثم ضع القيم المحفوظة فوقها (تحافظ على أي منتجات مفقودة من السابق)
             inventory = Object.assign({}, defaultInventory);
-            for (const [name, data] of Object.entries(saved)) {
-                inventory[name] = data;
+            if (savedRaw) {
+                let saved = JSON.parse(savedRaw);
+                for (let n in saved) inventory[n] = saved[n];
             }
-
-            // حفظ النسخة المدمجة لتظهر في التخزين المحلي
-            localStorage.setItem('inventory', JSON.stringify(inventory));
-
             renderInventoryGrid();
-            updateInventoryDisplay();
         }
 
-        // إنشاء وعرض بطاقات المخزون ديناميكياً بناءً على كائن inventory
         function renderInventoryGrid() {
             const grid = document.getElementById('inventoryGrid');
-            if (!grid) return;
             grid.innerHTML = '';
             for (const [name, data] of Object.entries(inventory)) {
-                const card = document.createElement('div');
-                card.className = 'inventory-card';
-                card.innerHTML = `
-                    <h3>${name}</h3>
-                    <p>السعر: <strong>${data.price}</strong> جنية</p>
-                    <div class="inventory-info">
-                        <label>الكمية المتوفرة:</label>
-                        <div class="quantity-input">
-                            <button onclick="decreaseInventory('${data.key}')">-</button>
-                            <input type="number" id="stock-${data.key}" value="${data.stock}" min="0">
-                            <button onclick="increaseInventory('${data.key}')">+</button>
-                        </div>
-                        <button onclick="saveInventory('${data.key}')" class="save-btn">💾 حفظ</button>
-                    </div>
-                `;
-                grid.appendChild(card);
+                grid.innerHTML += `<div class="inventory-card"><h3>${name}</h3><p>السعر: ${data.price}</p><div class="inventory-info"><div class="quantity-input"><button onclick="changeInv('${data.key}',-1)">-</button><input type="number" id="stock-${data.key}" value="${data.stock}"><button onclick="changeInv('${data.key}',1)">+</button></div><button onclick="saveInv('${data.key}')" class="save-btn">💾 حفظ</button></div></div>`;
             }
         }
 
-        // تحديث عرض المخزون
-        function updateInventoryDisplay() {
-            for (const [name, data] of Object.entries(inventory)) {
-                const input = document.getElementById('stock-' + data.key);
-                if (input) {
-                    input.value = data.stock;
-                }
-            }
+        function changeInv(key, val) { let inp = document.getElementById('stock-'+key); inp.value = Math.max(0, parseInt(inp.value) + val); }
+        function saveInv(key) { 
+            for(let n in inventory) if(inventory[n].key === key) inventory[n].stock = parseInt(document.getElementById('stock-'+key).value);
+            localStorage.setItem('inventory', JSON.stringify(inventory)); alert('تم الحفظ');
         }
 
-        // دوال تسجيل الدخول
-        function adminLogin() {
-            const username = document.getElementById('adminUsername').value.trim();
-            const password = document.getElementById('adminPassword').value;
-
-            if (!username || !password) {
-                alert('يرجى ملء جميع الحقول');
-                return;
-            }
-
-            if (adminUsers[username] && adminUsers[username].password === password) {
-                localStorage.setItem('adminUser', username);
-                document.getElementById('adminLoginSection').style.display = 'none';
-                document.getElementById('adminSection').style.display = 'block';
-                document.getElementById('adminNameDisplay').textContent = `مرحباً، ${adminUsers[username].name}`;
-                loadOrders();
-                loadInventory();
-            } else {
-                alert('بيانات خاطئة');
-            }
-        }
-
-        function adminLogout() {
-            localStorage.removeItem('adminUser');
-            document.getElementById('adminLoginSection').style.display = 'block';
-            document.getElementById('adminSection').style.display = 'none';
-            document.getElementById('adminUsername').value = '';
-            document.getElementById('adminPassword').value = '';
-        }
-
-        // تبديل التبويبات
-        function switchTab(tabName) {
-            // إخفاء جميع التبويبات
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // إظهار التبويب المختار
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // تحميل الطلبات
         function loadOrders() {
             const orders = JSON.parse(localStorage.getItem('orders')) || [];
             const tbody = document.getElementById('ordersTableBody');
-            const noOrders = document.getElementById('noOrders');
-
             tbody.innerHTML = '';
-
-            if (orders.length === 0) {
-                noOrders.style.display = 'block';
-                return;
-            }
-
-            noOrders.style.display = 'none';
-
-            orders.forEach((order, index) => {
-                const items = order.items.map(item => `${item.name} (${item.qty})`).join(', ');
-                const statusClass = order.status === 'موافق عليه' ? 'approved' : 'pending';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${order.customerName}</td>
-                    <td>${items}</td>
-                    <td>${order.notes ? order.notes : '-'}</td>
-                    <td>${order.date}</td>
-                    <td>${order.adminRecipient || '-'}</td>
-                    <td><span class="status ${statusClass}">${order.status}</span></td>
-                    <td class="actions">
-                        ${order.status === 'قيد المراجعة' ? `
-                            <button onclick="approveOrderModal(${index})" class="approve-btn">✓ موافقة</button>
-                            <button onclick="rejectOrder(${index})" class="reject-btn">✕ رفض</button>
-                        ` : `
-                            <button onclick="viewOrder(${index})" class="view-btn">👁️ عرض</button>
-                        `}
-                    </td>
-                `;
-                tbody.appendChild(row);
+            if (orders.length === 0) { document.getElementById('noOrders').style.display = 'block'; return; }
+            document.getElementById('noOrders').style.display = 'none';
+            orders.forEach((o, i) => {
+                const statusClass = o.status === 'موافق عليه' ? 'approved' : 'pending';
+                tbody.innerHTML += `<tr><td>${i+1}</td><td>${o.customerName}</td><td>${o.items.map(it=>`${it.name} (${it.qty})`).join(', ')}</td><td>${o.notes||'-'}</td><td>${o.date}</td><td>${o.adminRecipient||'-'}</td><td><span class="status ${statusClass}">${o.status}</span></td><td class="actions">${o.status === 'قيد المراجعة' ? `<button onclick="approveOrder(${i})" class="approve-btn">✓</button><button onclick="rejectOrder(${i})" class="reject-btn">✕</button>` : `<button onclick="alert('طلب مكتمل')" class="view-btn">👁️</button>`}</td></tr>`;
             });
         }
 
-        // فتح نافذة الموافقة على الطلب بإدخال اسم المستلم
-        function approveOrderModal(index) {
-            const adminName = localStorage.getItem('adminUser');
-            if (!adminName) {
-                alert('خطأ في الجلسة');
-                return;
-            }
-
-            const orders = JSON.parse(localStorage.getItem('orders')) || [];
-            const order = orders[index];
-
-            const adminFullName = adminUsers[adminName] ? adminUsers[adminName].name : adminName;
-
-            // خصم الكميات من المخزون تلقائياً بناءً على محتويات الطلب
-            try {
-                for (const item of order.items) {
-                    if (inventory && inventory[item.name]) {
-                        // تأكد من وجود خاصية stock
-                        const current = parseInt(inventory[item.name].stock) || 0;
-                        const newStock = Math.max(0, current - item.qty);
-                        inventory[item.name].stock = newStock;
-                    }
-                }
-                // حفظ المخزون المحدث
-                localStorage.setItem('inventory', JSON.stringify(inventory));
-            } catch (e) {
-                console.error('خطأ عند تحديث المخزون:', e);
-            }
-
-            orders[index].status = 'موافق عليه';
-            orders[index].adminRecipient = adminFullName;
+        function approveOrder(i) {
+            let orders = JSON.parse(localStorage.getItem('orders'));
+            let admin = localStorage.getItem('adminUser');
+            orders[i].items.forEach(it => { if(inventory[it.name]) inventory[it.name].stock -= it.qty; });
+            orders[i].status = 'موافق عليه';
+            orders[i].adminRecipient = adminUsers[admin].name;
             localStorage.setItem('orders', JSON.stringify(orders));
-
-            // تحديث واجهة المخزون والطلبات
-            try { updateInventoryDisplay(); } catch (e) {}
-            loadOrders();
-            alert('✓ تم الموافقة على الطلب من قبل: ' + adminFullName);
-        }
-
-        // رفض الطلب
-        function rejectOrder(index) {
-            const orders = JSON.parse(localStorage.getItem('orders')) || [];
-            orders.splice(index, 1);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            loadOrders();
-            alert('✕ تم رفض الطلب');
-        }
-
-        // عرض الطلب
-        function viewOrder(index) {
-            const orders = JSON.parse(localStorage.getItem('orders')) || [];
-            const order = orders[index];
-            const items = order.items.map(item => `${item.name}: ${item.qty}`).join('\n');
-            let details = `تفاصيل الطلب:\n\nالعميل: ${order.customerName}\n\nالمنتجات:\n${items}`;
-            if (order.notes) {
-                details += `\n\nملاحظات:\n${order.notes}`;
-            }
-            
-            if (order.adminRecipient) {
-                details += `\n\nتم الاستلام بواسطة: ${order.adminRecipient}`;
-            }
-            
-            alert(details);
-        }
-
-        // دوال إدارة المخزون
-        function increaseInventory(key) {
-            const input = document.getElementById('stock-' + key);
-            input.value = parseInt(input.value) + 1;
-        }
-
-        function decreaseInventory(key) {
-            const input = document.getElementById('stock-' + key);
-            if (parseInt(input.value) > 0) {
-                input.value = parseInt(input.value) - 1;
-            }
-        }
-
-        function saveInventory(key) {
-            const input = document.getElementById('stock-' + key);
-            const newStock = parseInt(input.value);
-
-            for (const [name, data] of Object.entries(inventory)) {
-                if (data.key === key) {
-                    data.stock = newStock;
-                    break;
-                }
-            }
-
             localStorage.setItem('inventory', JSON.stringify(inventory));
-            alert('✓ تم حفظ المخزون');
+            loadOrders(); renderInventoryGrid();
         }
 
-        // التقارير الأسبوعية
+        function rejectOrder(i) {
+            let orders = JSON.parse(localStorage.getItem('orders'));
+            orders.splice(i, 1);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            loadOrders();
+        }
+
+        // --- استعادة كود التقارير التفصيلي الأصلي ---
         function generateWeeklyReport() {
             const orders = JSON.parse(localStorage.getItem('orders')) || [];
             const approvedOrders = orders.filter(o => o.status === 'موافق عليه');
+            if (approvedOrders.length === 0) { document.getElementById('reportContent').innerHTML = '<p>لا توجد طلبات</p>'; return; }
 
-            if (approvedOrders.length === 0) {
-                document.getElementById('reportContent').innerHTML = '<p style="text-align: center; color: #999;">لا توجد طلبات موافق عليها</p>';
-                return;
-            }
-
-            // حساب إجمالي المنتجات
-            const productTotals = {};
-
-            approvedOrders.forEach(order => {
-                order.items.forEach(item => {
-                    if (!productTotals[item.name]) {
-                        productTotals[item.name] = 0;
-                    }
-                    productTotals[item.name] += item.qty;
-                });
-            });
-
-            // بناء التقرير
-            let reportHTML = `
-                <div class="report-header">
-                    <h3>📊 التقرير الأسبوعي المفصل</h3>
-                    <p>التاريخ: ${new Date().toLocaleDateString('ar-EG')}</p>
-                </div>
-                <div class="report-summary">
-                    <div class="summary-item">
-                        <span>عدد الطلبات:</span>
-                        <strong>${approvedOrders.length}</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>عدد العملاء:</span>
-                        <strong>${[...new Set(approvedOrders.map(o => o.customerName))].length}</strong>
-                    </div>
-                </div>
-
-                <!-- تقرير المنتجات -->
-                <div class="report-section">
-                    <h4>📦 ملخص المنتجات المباعة</h4>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>المنتج</th>
-                                <th>الكمية المباعة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            for (const [product, qty] of Object.entries(productTotals)) {
-                reportHTML += `
-                    <tr>
-                        <td>${product}</td>
-                        <td>${qty}</td>
-                    </tr>
-                `;
-            }
-
-            reportHTML += `
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- تقرير العملاء المفصل -->
-                <div class="report-section">
-                    <h4>👥 تفاصيل الطلبات حسب العميل</h4>
-            `;
-
-            // تجميع الطلبات حسب العميل
             const customerOrders = {};
             approvedOrders.forEach(order => {
-                if (!customerOrders[order.customerName]) {
-                    customerOrders[order.customerName] = [];
-                }
+                if (!customerOrders[order.customerName]) customerOrders[order.customerName] = [];
                 customerOrders[order.customerName].push(order);
             });
 
-            // عرض تفاصيل كل عميل
-            for (const [customerName, orders] of Object.entries(customerOrders)) {
-                let customerTotal = orders.reduce((sum, order) => sum + order.total, 0);
-                
-                reportHTML += `
-                    <div class="customer-report">
-                        <div class="customer-header">
-                            <h5>👤 ${customerName}</h5>
-                            <span class="customer-total">عدد الطلبات: ${orders.length}</span>
-                        </div>
-                        <table class="customer-table">
-                            <thead>
-                                <tr>
-                                    <th>رقم الطلب</th>
-                                    <th>التاريخ</th>
-                                    <th>المنتجات</th>
-                                    <th>مستلم الطلب</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                
-                orders.forEach(order => {
-                    const items = order.items.map(item => `${item.name} (${item.qty})`).join(', ');
-                    reportHTML += `
-                        <tr>
-                            <td>#${order.id}</td>
-                            <td>${order.date}</td>
-                            <td>${items}</td>
-                            <td>${order.adminRecipient || '-'}</td>
-                        </tr>
-                    `;
+            let reportHTML = `<div class="report-header"><h3>📊 التقرير الأسبوعي التفصيلي</h3><p>تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}</p></div>`;
+            
+            for (const [name, orders] of Object.entries(customerOrders)) {
+                reportHTML += `<div class="customer-report"><h5>👤 العميل: ${name}</h5><table class="admin-table"><thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>المنتجات</th><th>المستلم</th><th>ملاحظات</th></tr></thead><tbody>`;
+                orders.forEach(o => {
+                    reportHTML += `<tr><td>#${o.id}</td><td>${o.date}</td><td>${o.items.map(it=>`${it.name} (${it.qty})`).join(', ')}</td><td>${o.adminRecipient}</td><td>${o.notes || '-'}</td></tr>`;
                 });
-                
-                reportHTML += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+                reportHTML += `</tbody></table></div>`;
             }
-
-            reportHTML += `
-                </div>
-            `;
-
             document.getElementById('reportContent').innerHTML = reportHTML;
         }
 
         function downloadReport() {
-            const reportContent = document.getElementById('reportContent').innerText;
-            if (reportContent.includes('لا توجد طلبات')) {
-                alert('لا يوجد تقرير للتحميل');
-                return;
-            }
-
-            const element = document.createElement('a');
-            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(reportContent));
-            element.setAttribute('download', `تقرير_أسبوعي_${new Date().toLocaleDateString('ar-EG')}.txt`);
-            element.style.display = 'none';
-            document.body.appendChild(element);
-            element.click();
-            document.body.removeChild(element);
+            const content = document.getElementById('reportContent').innerText;
+            const blob = new Blob([content], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'تقرير_المبيعات.txt';
+            a.click();
         }
 
-        // التحقق من جلسة الإدمن
-        window.addEventListener('load', function() {
-            const admin = localStorage.getItem('adminUser');
-            if (admin && adminUsers[admin]) {
-                document.getElementById('adminLoginSection').style.display = 'none';
-                document.getElementById('adminSection').style.display = 'block';
-                document.getElementById('adminNameDisplay').textContent = `مرحباً، ${adminUsers[admin].name}`;
-                loadOrders();
-                loadInventory();
-            }
-        });
-
-        // تحميل البيانات عند فتح الصفحة
-        loadInventory();
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(t+'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
     </script>
 </body>
 </html>
